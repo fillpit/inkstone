@@ -45,7 +45,7 @@ export function AppShell() {
         if (!hydrated || loading || deepLinkHandled.current)
             return;
         deepLinkHandled.current = true;
-        const match = /^\/n\/([0-9a-hjkmnp-tv-z]{26})\/?$/.exec(location.pathname);
+        const match = /^(?:\/app)?\/n\/([0-9a-hjkmnp-tv-z]{26})\/?$/.exec(location.pathname);
         if (!match)
             return;
         useUi.getState().openExplorer();

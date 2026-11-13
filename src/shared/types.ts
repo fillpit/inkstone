@@ -476,6 +476,40 @@ export interface ShareListItem extends ShareInfo {
   deletedAt: number | null
 }
 
+export interface BlogConfig {
+  title: string
+  subtitle: string
+  authorName: string
+  pageSize: number
+  allowedFolderIds: string[]
+  tagMode: 'allowlist' | 'blocklist'
+  tagList: string[]
+}
+
+export interface BlogPostInfo {
+  noteId: string
+  slug: string
+  url: string
+  published: boolean
+  summary: string
+  categoryFolderId: string | null
+  publishedAt: number | null
+  updatedAt: number
+  createdAt: number
+}
+
+export interface BlogPostListItem extends BlogPostInfo {
+  noteTitle: string
+  deletedAt: number | null
+}
+
+export interface BlogPostUpsertInput {
+  slug: string
+  published: boolean
+  summary?: string
+  categoryFolderId?: string | null
+}
+
 export interface PublicNote {
   title: string
   content: string

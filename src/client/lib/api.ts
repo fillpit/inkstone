@@ -9,6 +9,10 @@ import type {
   BackupTargetInput,
   BackupTargetPatchInput,
   Backlink,
+  BlogConfig,
+  BlogPostInfo,
+  BlogPostListItem,
+  BlogPostUpsertInput,
   Folder,
   GraphResponse,
   ImportResult,
@@ -486,6 +490,21 @@ export const api = {
     remove: (noteId: string) => request<{ ok: true }>(`/api/share/${noteId}`, { method: 'DELETE' }),
     read: (slug: string, password?: string, signal?: AbortSignal) =>
       request<PublicNote>(`/api/public/${slug}`, { method: 'POST', body: { password }, signal }),
+  },
+
+  blog: {
+    getConfig: (signal?: AbortSignal) =>
+      request<{ config: BlogConfig }>('/api/blog/config', { signal }),
+    updateConfig: (body: Partial<BlogConfig>) =>
+      request<{ config: BlogConfig }>('/api/blog/config', { method: 'PUT', body }),
+    listPosts: (signal?: AbortSignal) =>
+      request<{ posts: BlogPostListItem[] }>('/api/blog/posts', { signal }),
+    getPost: (noteId: string, signal?: AbortSignal) =>
+      request<{ post: BlogPostInfo | null }>(`/api/blog/posts/${noteId}`, { signal }),
+    upsertPost: (noteId: string, body: BlogPostUpsertInput) =>
+      request<{ post: BlogPostInfo }>(`/api/blog/posts/${noteId}`, { method: 'PUT', body }),
+    removePost: (noteId: string) =>
+      request<{ ok: true }>(`/api/blog/posts/${noteId}`, { method: 'DELETE' }),
   },
 
   transfer: {

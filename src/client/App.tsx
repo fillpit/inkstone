@@ -25,21 +25,36 @@ export function App() {
     const match = /^\/s\/([A-Za-z0-9_-]+)/.exec(location.pathname)
     return match?.[1] ?? null
   })
+  const [isAppRoute] = useState(() => {
+    if (/^\/s\/[A-Za-z0-9_-]+/.test(location.pathname)) return false
+    if (location.pathname === '/app' || location.pathname.startsWith('/app/')) return true
+    const legacyNote = /^\/n\/([0-9a-hjkmnp-tv-z]{26})\/?$/.exec(location.pathname)
+    if (legacyNote) {
+      history.replaceState(null, '', `/app/n/${legacyNote[1]}${location.search}${location.hash}`)
+      return true
+    }
+    if (location.pathname === '/') {
+      history.replaceState(null, '', `/app${location.search}${location.hash}`)
+      return true
+    }
+    return true
+  })
 
   useEffect(() => {
-    if (shareSlug) return
+    if (shareSlug || !isAppRoute) return
     void load()
-  }, [load, shareSlug])
+  }, [load, shareSlug, isAppRoute])
 
   useEffect(() => watchSystemTheme(), [])
 
   useEffect(() => {
+    if (!isAppRoute) return
     initializePwa()
-  }, [])
+  }, [isAppRoute])
 
   useEffect(() => {
-    if (!shareSlug && status !== 'loading') requestOfflineWarmup()
-  }, [shareSlug, status])
+    if (isAppRoute && !shareSlug && status !== 'loading') requestOfflineWarmup()
+  }, [isAppRoute, shareSlug, status])
 
   useEffect(() => {
     if (shareSlug || status !== 'loading') dismissBootScreen()

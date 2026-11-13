@@ -205,6 +205,19 @@ export const SCHEMA_STATEMENTS: readonly string[] = [
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_shares_note ON shares(note_id)`,
   `CREATE INDEX IF NOT EXISTS idx_shares_user_created ON shares(user_id, created_at DESC, slug DESC)`,
 
+  `CREATE TABLE IF NOT EXISTS blog_posts (
+    note_id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    slug TEXT NOT NULL UNIQUE,
+    published INTEGER NOT NULL DEFAULT 0,
+    summary TEXT NOT NULL DEFAULT '',
+    category_folder_id TEXT,
+    published_at INTEGER,
+    updated_at INTEGER NOT NULL,
+    created_at INTEGER NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_blog_posts_user_published ON blog_posts(user_id, published, published_at DESC, note_id DESC)`,
+
   `CREATE TABLE IF NOT EXISTS share_asset_sessions (
     id TEXT PRIMARY KEY,
     slug TEXT NOT NULL,
@@ -537,6 +550,23 @@ const SCHEMA_MIGRATIONS: readonly SchemaMigration[] = [
     version: 13,
     statements: [BACKUP_ARCHIVES_TABLE, BACKUP_ARCHIVES_INDEX],
   },
+  {
+    version: 14,
+    statements: [
+      `CREATE TABLE IF NOT EXISTS blog_posts (
+        note_id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        slug TEXT NOT NULL UNIQUE,
+        published INTEGER NOT NULL DEFAULT 0,
+        summary TEXT NOT NULL DEFAULT '',
+        category_folder_id TEXT,
+        published_at INTEGER,
+        updated_at INTEGER NOT NULL,
+        created_at INTEGER NOT NULL
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_blog_posts_user_published ON blog_posts(user_id, published, published_at DESC, note_id DESC)`,
+    ],
+  },
 ]
 
 const FTS_STATEMENT = `CREATE VIRTUAL TABLE IF NOT EXISTS notes_fts USING fts5(
@@ -573,6 +603,7 @@ const REQUIRED_COLUMNS: Readonly<Record<string, readonly string[]>> = {
   backup_archives: ['user_id', 'target_id', 'destination', 'archive_path', 'created_at'],
   backup_runs: ['id', 'user_id', 'trigger', 'status', 'started_at', 'finished_at', 'note_count', 'file_count', 'bytes', 'detail'],
   shares: ['slug', 'note_id', 'user_id', 'password_hash', 'expires_at', 'views', 'created_at'],
+  blog_posts: ['note_id', 'user_id', 'slug', 'published', 'summary', 'category_folder_id', 'published_at', 'updated_at', 'created_at'],
   share_asset_sessions: ['id', 'slug', 'password_hash', 'expires_at', 'created_at'],
   changes: ['seq', 'user_id', 'entity', 'entity_id', 'op', 'at'],
   sessions: ['id', 'user_id', 'expires_at', 'created_at'],
@@ -605,6 +636,7 @@ const REQUIRED_TABLES = [
   'backup_archives',
   'backup_runs',
   'shares',
+  'blog_posts',
   'share_asset_sessions',
   'changes',
   'sessions',
@@ -621,6 +653,7 @@ const REQUIRED_TABLES = [
 ] as const
 
 const REQUIRED_INDEXES = [
+  'idx_blog_posts_user_published',
   'idx_folders_user',
   'idx_folders_unique_sibling',
   'idx_notes_user_updated',

@@ -12,7 +12,9 @@ import { Modal, Tooltip, confirm } from '../../components/overlay';
 import { Empty, LoadingBlock } from '../../components/feedback';
 import { useUi } from '../../store/ui';
 import { useActiveNote } from '../../store/notes';
+import { useSession } from '../../store/session';
 import { t } from "../../lib/i18n";
+import { BlogPublishForm } from './BlogPublishForm';
 import {
     expiresInForSelection,
     KEEP_CURRENT_EXPIRY,
@@ -31,6 +33,8 @@ export function SharePanel({ onClose, targetNote, onChanged }: {
 }) {
     const { note: activeNote } = useActiveNote();
     const note = targetNote ?? activeNote;
+    const isOwner = useSession((s) => s.user?.role === 'owner');
+    const [tab, setTab] = useState<'share' | 'blog'>('share');
     const toast = useUi((s) => s.toast);
     const [share, setShare] = useState<ShareInfo | null | undefined>(undefined);
     const [loadError, setLoadError] = useState<string | null>(null);
@@ -205,7 +209,7 @@ export function SharePanel({ onClose, targetNote, onChanged }: {
             toast({ title: t("preview.could_not_copy"), tone: 'danger' });
         }
     };
-    return (<Modal open onClose={onClose} title={t("share.share_note")} description={`"${note.title || t("common.untitled_note")}"`} width={480} footer={share ? (<>
+    return (<Modal open onClose={onClose} title={t("share.share_note")} description={`"${note.title || t("common.untitled_note")}"`} width={480} footer={tab === 'blog' && isOwner ? undefined : share ? (<>
             <Button variant="ghost" className="mr-auto text-[var(--danger)]" icon={<Trash2 size={13}/>} loading={busy === 'revoke'} disabled={busy === 'save'} onClick={() => void revoke()}>{t("share.revoke_link")}</Button>
             <Button variant="secondary" disabled={busy !== null} onClick={onClose}>{t("share.done")}</Button>
             <Button variant="primary" loading={busy === 'save'} disabled={busy === 'revoke'} onClick={() => void create()}>{t("share.update_settings")}</Button>
@@ -213,7 +217,21 @@ export function SharePanel({ onClose, targetNote, onChanged }: {
             <Button variant="ghost" disabled={busy !== null} onClick={onClose}>{t("common.cancel")}</Button>
             <Button variant="primary" icon={<Globe size={13}/>} loading={busy === 'save'} disabled={share === undefined || busy !== null} onClick={() => void create()}>{t("share.generate_public_link")}</Button>
           </>)}>
-      {loadError ? (<Empty art="notes" compact title={t("share.could_not_load_sharing_status")} description={loadError} action={<Button size="sm" variant="secondary" onClick={() => setReload((value) => value + 1)}>{t("common.retry")}</Button>}/>) : share === undefined ? (<LoadingBlock label={t("share.loading_share_status")}/>) : (<div className="space-y-4">
+      {isOwner && (
+        <div className="mb-4">
+          <Segmented
+            value={tab}
+            onChange={(value) => setTab(value === 'blog' ? 'blog' : 'share')}
+            options={[
+              { value: 'share', label: t('blog.private_share_tab') },
+              { value: 'blog', label: t('blog.publish_tab') },
+            ]}
+          />
+        </div>
+      )}
+      {tab === 'blog' && isOwner ? (
+        <BlogPublishForm note={note} onClose={onClose} onChanged={onChanged} />
+      ) : loadError ? (<Empty art="notes" compact title={t("share.could_not_load_sharing_status")} description={loadError} action={<Button size="sm" variant="secondary" onClick={() => setReload((value) => value + 1)}>{t("common.retry")}</Button>}/>) : share === undefined ? (<LoadingBlock label={t("share.loading_share_status")}/>) : (<div className="space-y-4">
           {share && (<div className="rounded-[var(--r-lg)] border border-[var(--border-subtle)] bg-[var(--bg-inset)] p-3">
               <div className="flex items-center gap-2">
                 <Link2 size={13} className="shrink-0 text-[var(--accent)]"/>

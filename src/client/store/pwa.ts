@@ -81,7 +81,7 @@ async function registerServiceWorker(): Promise<void> {
   try {
     const wasControlled = Boolean(navigator.serviceWorker.controller)
     const registration = await navigator.serviceWorker.register('/sw.js', {
-      scope: '/',
+      scope: '/app',
       updateViaCache: 'none',
     })
     serviceWorkerRegistration = registration

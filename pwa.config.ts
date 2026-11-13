@@ -138,9 +138,13 @@ function serviceWorkerSource(buildId: string, coreUrls: string[], allUrls: strin
 	const CACHE_META_URL = '/.inkstone-cache-meta'
 	const MANIFEST_META_PREFIX = '/.inkstone-offline-manifest/'
 	const CURRENT_MANIFEST_URL = MANIFEST_META_PREFIX + BUILD_ID
-	const NETWORK_ONLY_EXACT_PATHS = ['/authorize', '/mcp']
-	const NETWORK_ONLY_PATH_PREFIXES = ['/api/', '/authorize/', '/mcp/', '/oauth/', '/.well-known/']
+	const NETWORK_ONLY_EXACT_PATHS = ['/', '/authorize', '/mcp', '/robots.txt', '/sitemap.xml', '/rss.xml']
+	const NETWORK_ONLY_PATH_PREFIXES = ['/api/', '/authorize/', '/mcp/', '/oauth/', '/.well-known/', '/p/', '/category/', '/tag/', '/blog-assets/']
 	let warmPromise = null
+
+function isAppNavigationPath(pathname) {
+  return pathname === '/app' || pathname.startsWith('/app/')
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
@@ -187,6 +191,7 @@ self.addEventListener('fetch', (event) => {
 	  ) return
 
   if (request.mode === 'navigate') {
+    if (!isAppNavigationPath(url.pathname)) return
     event.respondWith(
       fetch(request).catch(async () => {
         const shell = await caches.open(SHELL_CACHE)

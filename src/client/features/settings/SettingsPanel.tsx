@@ -1,6 +1,6 @@
 import { lazy, memo, Suspense, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { BrainCircuit, Cloud, Database, Info, Keyboard, Link2, Palette, RefreshCw, Type, UserRound, X, } from 'lucide-react';
+import { BrainCircuit, Cloud, Database, Globe, Info, Keyboard, Link2, Palette, RefreshCw, Type, UserRound, X, } from 'lucide-react';
 import { ACCENTS } from '@shared/constants';
 import { cn } from '../../lib/cn';
 import { Tooltip, useDialogFocus, useEscape, useLockScroll } from '../../components/overlay';
@@ -19,9 +19,11 @@ export const SECTIONS: {
     id: Section;
     label: () => string;
     icon: React.ReactNode;
+    ownerOnly?: boolean;
 }[] = [
     { id: 'appearance', label: () => t("settings.appearance"), icon: <Palette size={14}/> },
     { id: 'editor', label: () => t("settings.editor"), icon: <Type size={14}/> },
+    { id: 'blog', label: () => t("settings.blog"), icon: <Globe size={14}/>, ownerOnly: true },
     { id: 'backup', label: () => t("settings.backup"), icon: <Cloud size={14}/> },
     { id: 'sync', label: () => t("settings.sync"), icon: <RefreshCw size={14}/> },
     { id: 'mcp', label: () => t("settings.mcp"), icon: <BrainCircuit size={14}/> },
@@ -34,11 +36,16 @@ export function SettingsPanel({ onClose }: {
     onClose: () => void;
 }) {
     const userId = useSession((s) => s.user?.id);
+    const role = useSession((s) => s.user?.role);
+    const visibleSections = useMemo(
+        () => SECTIONS.filter((item) => !item.ownerOnly || role === 'owner'),
+        [role],
+    );
     const storageKey = `${UI_STORAGE_KEY}:settings-section:${userId ?? 'anonymous'}`;
     const [section, setSection] = useState<Section>(() => {
         try {
             const saved = localStorage.getItem(storageKey);
-            return SECTIONS.find((item) => item.id === saved)?.id ?? 'appearance';
+            return visibleSections.find((item) => item.id === saved)?.id ?? 'appearance';
         } catch { return 'appearance'; }
     });
     const [visited, setVisited] = useState<Section[]>([section]);
@@ -63,7 +70,7 @@ export function SettingsPanel({ onClose }: {
         <nav className="flex w-full shrink-0 flex-col border-b border-[var(--border-subtle)] bg-[var(--bg-sunken)] p-2 md:w-[172px] md:border-r md:border-b-0">
           <div id={titleId} className="px-2 py-1.5 text-[13.5px] font-semibold tracking-[-0.012em] md:py-2.5">{t("common.settings")}</div>
           <div className="flex gap-1 overflow-x-auto pb-1 md:block md:space-y-px md:overflow-visible md:pb-0">
-            {SECTIONS.map((item) => (<button key={item.id} type="button" aria-current={section === item.id ? 'page' : undefined} onPointerEnter={() => warmSettingsSection(item.id)} onFocus={() => warmSettingsSection(item.id)} onClick={() => selectSection(item.id)} className={cn('flex h-10 shrink-0 items-center gap-2 rounded-[var(--r-md)] px-2.5 text-left text-[12.5px] md:h-[30px] md:w-full md:gap-2.5 md:px-2', 'transition-colors duration-[var(--dur-fast)]', section === item.id
+            {visibleSections.map((item) => (<button key={item.id} type="button" aria-current={section === item.id ? 'page' : undefined} onPointerEnter={() => warmSettingsSection(item.id)} onFocus={() => warmSettingsSection(item.id)} onClick={() => selectSection(item.id)} className={cn('flex h-10 shrink-0 items-center gap-2 rounded-[var(--r-md)] px-2.5 text-left text-[12.5px] md:h-[30px] md:w-full md:gap-2.5 md:px-2', 'transition-colors duration-[var(--dur-fast)]', section === item.id
                 ? 'bg-[var(--accent-soft)] font-medium text-[var(--text-primary)]'
                 : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]')}>
                 <span className={cn('shrink-0', section === item.id ? 'text-[var(--accent)]' : 'text-[var(--text-tertiary)]')}>
