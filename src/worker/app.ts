@@ -15,6 +15,7 @@ import { backupRoutes } from './routes/backup'
 import { settingsRoutes } from './routes/settings'
 import { shareManageRoutes, sharePageRoutes, shareRoutes } from './routes/share'
 import { blogManageRoutes } from './routes/blog-manage'
+import { blogPublicRoutes } from './routes/blog-public'
 import { transferRoutes } from './routes/transfer'
 import { updateRoutes } from './routes/update'
 import { mcpAuthorizeRoutes } from './routes/mcp-authorize'
@@ -64,6 +65,13 @@ export function createApp() {
     c.set('database', await initializeDatabase(c.env))
     await next()
   })
+  for (const blogPath of ['/', '/p/*', '/category/*', '/tag/*', '/blog-assets/*', '/sitemap.xml', '/rss.xml']) {
+    app.use(blogPath, async (c, next) => {
+      c.set('database', await initializeDatabase(c.env))
+      await next()
+    })
+    app.use(blogPath, loadSession)
+  }
 
   app.use('/api/*', loadSession)
   app.use('/authorize', loadSession)
@@ -110,8 +118,7 @@ export function createApp() {
 
   app.route('/s', sharePageRoutes)
   app.route('/', mcpAuthorizeRoutes)
-
-  app.get('/', (c) => c.redirect('/app', 302))
+  app.route('/', blogPublicRoutes)
 
   app.all('*', (c) => c.env.ASSETS.fetch(c.req.raw))
 
